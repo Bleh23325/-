@@ -76,29 +76,45 @@ if ($searchTerm) {
 <h3>Фильтр сотрудников</h3>
 <div class="filter-form">
     <form id="searchForm">
-        <input type="date" id="startDate" name="start_date">
-        <input type="date" id="endDate" name="end_date">
+        <div class="input-container">
+            <p>Начальная дата</p>
+            <input type="date" id="startDate" name="start_date">
+        </div>
 
-        <select id="statusSelect" name="status">
+        <div class="input-container">
+            <p>Конечная дата</p>
+            <input type="date" id="endDate" name="end_date">
+        </div>
+
+        <div class="input-container">
+            <p>Статус</p>
+            <select id="statusSelect" name="status">
             <option value="">Все статусы</option>
             <?php foreach ($statuses as $status): ?>
                 <option value="<?= $status['id_dis'] ?>"><?= htmlspecialchars($status['dismissed']) ?></option>
             <?php endforeach; ?>
         </select>
+        </div>
 
-        <select id="departmentFilter" name="department">
+        <div class="input-container">
+            <p>Отдел</p>
+            <select id="departmentFilter" name="department">
             <option value="">Все отделы</option>
             <?php foreach ($departments as $department): ?>
                 <option value="<?= $department['id_departament'] ?>"><?= htmlspecialchars($department['department']) ?></option>
             <?php endforeach; ?>
         </select>
+        </div>
 
-        <select id="jobTitleFilter" name="job_title">
+        <div class="input-container">
+            <p>Должность</p>
+            <select id="jobTitleFilter" name="job_title">
             <option value="">Все должности</option>
             <?php foreach ($jobTitles as $jobTitle): ?>
                 <option value="<?= $jobTitle['id_jt'] ?>"><?= htmlspecialchars($jobTitle['Job_title']) ?></option>
             <?php endforeach; ?>
         </select>
+        </div>
 
         <button type="submit">Найти</button>
     </form>
@@ -138,6 +154,12 @@ $(document).ready(function() {
         let status = $('#statusSelect').val() || '';
         let department = $('#departmentFilter').val() || '';
         let jobTitle = $('#jobTitleFilter').val() || '';
+
+        // Проверяем, что хотя бы одно из полей "дата" или "статус" заполнено
+        if (!startDate && !endDate && !status) {
+            alert('Пожалуйста, выберите дату или статус для поиска.');
+            return; // Прерываем выполнение, если оба поля пустые
+        }
 
         let tableBody = $('#workersTable tbody');
         tableBody.empty(); // Очищаем таблицу перед новым поиском

@@ -48,7 +48,6 @@ if ($searchingByName) {
     }
 }
 
-// Добавление условий фильтрации, если НЕ выполняется поиск по ФИО
 if (!$searchingByName) {
     if ($selectedDepartment) {
         $query .= " AND w.department = " . intval($selectedDepartment);
@@ -59,9 +58,11 @@ if (!$searchingByName) {
     }
 
     if ($selectedDismissed) {
-        $query .= " AND dis.dismissed = 'Уволен'";
+        // Фильтруем по конкретному статусу
+        $query .= " AND dis.id_dis = " . intval($selectedDismissed);
     } else {
-        $query .= " AND (dis.dismissed IS NULL OR dis.dismissed != 'Уволен')";
+        // Исключаем уволенных, если статус не выбран
+        $query .= " AND (dis.id_dis IS NULL OR dis.dismissed != 'Уволен')";
     }
 }
 
@@ -219,11 +220,14 @@ while ($row = mysqli_fetch_assoc($results)) {
             absenceInfoDiv.innerHTML = "";
 
             if (absences.length > 0) {
-                absences.forEach(absence => {
-                    const p = document.createElement('p');
-                    p.textContent = `Отсутствовал с ${absence.start} по ${absence.end}`;
-                    absenceInfoDiv.appendChild(p);
-                });
+                // Сортировка по дате окончания отсутствия (по убыванию)
+                absences.sort((a, b) => new Date(b.end) - new Date(a.end));
+                
+                // Отображаем только последнюю дату отсутствия
+                const lastAbsence = absences[0];
+                const p = document.createElement('p');
+                p.textContent = `С ${lastAbsence.start} по ${lastAbsence.end}`;
+                absenceInfoDiv.appendChild(p);
             } else {
                 absenceInfoDiv.textContent = "Нет данных об отсутствии.";
             }

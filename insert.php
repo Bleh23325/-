@@ -10,6 +10,7 @@ if ($conn->connect_error) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Получаем данные из формы
     $surname = $_POST['surname'];
     $name = $_POST['name'];
     $patronymic = $_POST['patronymic'];
@@ -18,20 +19,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $salary = $_POST['salary'];
     $street = $_POST['street'];
     $house = $_POST['house'];
+    $city = $_POST['city'];
+    $apartment = $_POST['apartment'];
     $passport_series = $_POST['passport_series'];
     $passport_number = $_POST['passport_number'];
+    $passport_issued_by = $_POST['passport_issued_by'];
+    $passport_issued_date = $_POST['passport_issued_date'];
     $phone = $_POST['phone'];
     $birth_date = $_POST['birth_date'];
     $hire_date = $_POST['hire_date'];
+    $exit_date = $_POST['exit_date']; // Новое поле для даты выхода
 
+    // Вставляем данные в таблицу Worker
     $sql = "INSERT INTO Worker (Familia, Ima, Otchestvo, department, jod_title, data_rojdenia, zarplata, data_zachislenia) 
             VALUES ('$surname', '$name', '$patronymic', '$department', '$job_title', '$birth_date', '$salary', '$hire_date')";
-    
+
     if ($conn->query($sql) === TRUE) {
         $worker_id = $conn->insert_id;
-        $conn->query("INSERT INTO address (street, house, Worker) VALUES ('$street', '$house', '$worker_id')");
-        $conn->query("INSERT INTO data_worker (seria_pasporta, nomer_pasporta, Worker) VALUES ('$passport_series', '$passport_number', '$worker_id')");
+
+        // Вставляем данные в таблицу address (улица, дом, город, квартира)
+        $conn->query("INSERT INTO address (street, house, apartment, city, Worker) VALUES ('$street', '$house', '$apartment', '$city', '$worker_id')");
+
+        // Вставляем данные в таблицу data_worker (паспорт)
+        $conn->query("INSERT INTO data_worker (seria_pasporta, nomer_pasporta, who_issue, when_issue, Worker) 
+                      VALUES ('$passport_series', '$passport_number', '$passport_issued_by', '$passport_issued_date', '$worker_id')");
+
+        // Вставляем контактные данные в таблицу info_worker
         $conn->query("INSERT INTO info_worker (phone, Worker) VALUES ('$phone', '$worker_id')");
+
+        // Вставляем данные в таблицу time_of_absence
+        // Статус "Работает" и дата выхода из формы
+        $conn->query("INSERT INTO time_of_absence (worker_id, status, fst_date) 
+                      VALUES ('$worker_id', 'Работает', '$exit_date')");
+
         echo "<p class='success-message'>Сотрудник добавлен успешно!</p>";
     } else {
         echo "<p class='error-message'>Ошибка: " . $conn->error . "</p>";
@@ -88,13 +108,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
             <div class="form-group">
                 <label>Адрес:</label>
+                <input type="text" name="city" placeholder="Город" required>
                 <input type="text" name="street" placeholder="Улица" required>
                 <input type="number" name="house" placeholder="Дом" required>
+                <input type="number" name="apartment" placeholder="Квартира" required>
             </div>
             <div class="form-group">
                 <label>Паспорт:</label>
                 <input type="text" name="passport_series" id="passport_series" placeholder="Серия (4 цифры)" required>
                 <input type="text" name="passport_number" id="passport_number" placeholder="Номер (6 цифр)" required>
+                <input type="text" name="passport_issued_by" placeholder="Кем выдан" required>
+                <input type="date" name="passport_issued_date" placeholder="Дата выдачи" required>
             </div>
             <div class="form-group">
                 <label>Телефон:</label>
