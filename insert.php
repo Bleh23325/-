@@ -28,7 +28,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $phone = $_POST['phone'];
     $birth_date = $_POST['birth_date'];
     $hire_date = $_POST['hire_date'];
-    $exit_date = $_POST['exit_date']; // Новое поле для даты выхода
 
     // Вставляем данные в таблицу Worker
     $sql = "INSERT INTO Worker (Familia, Ima, Otchestvo, department, jod_title, data_rojdenia, zarplata, data_zachislenia) 
@@ -46,11 +45,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Вставляем контактные данные в таблицу info_worker
         $conn->query("INSERT INTO info_worker (phone, Worker) VALUES ('$phone', '$worker_id')");
-
-        // Вставляем данные в таблицу time_of_absence
-        // Статус "Работает" и дата выхода из формы
-        $conn->query("INSERT INTO time_of_absence (worker_id, status, fst_date) 
-                      VALUES ('$worker_id', 'Работает', '$exit_date')");
 
         echo "<p class='success-message'>Сотрудник добавлен успешно!</p>";
     } else {
@@ -107,13 +101,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <input type="number" name="salary" placeholder="Введите сумму" required min="10000">
             </div>
             <div class="form-group">
-                <label>Адрес:</label>
-                <input type="text" name="city" placeholder="Город" required>
-                <input type="text" name="street" placeholder="Улица" required>
-                <input type="number" name="house" placeholder="Дом" required>
-                <input type="number" name="apartment" placeholder="Квартира" required>
-            </div>
-            <div class="form-group">
                 <label>Паспорт:</label>
                 <input type="text" name="passport_series" id="passport_series" placeholder="Серия (4 цифры)" required>
                 <input type="text" name="passport_number" id="passport_number" placeholder="Номер (6 цифр)" required>
@@ -123,6 +110,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="form-group">
                 <label>Телефон:</label>
                 <input type="tel" name="phone" id="phone" placeholder="+7 (___) ___-__-__" required>
+            </div>
+            <div class="form-group">
+                <label>Адрес:</label>
+                <input type="text" name="city" placeholder="Город" required>
+                <input type="text" name="street" placeholder="Улица" required>
+                <input type="number" name="house" placeholder="Дом" required>
+                <input type="number" name="apartment" placeholder="Квартира" required>
             </div>
             <div class="form-group">
                 <label>Департамент:</label>
