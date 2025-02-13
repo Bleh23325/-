@@ -102,6 +102,7 @@ while ($row = mysqli_fetch_assoc($results)) {
             <a href="/meneger.php">Главная</a>
             <a href="/insert.php">Добавить работника</a>
             <a href="/search_by_date.php">Умный поиск</a>
+            <a href="/edit_worker.php">Изменить работника</a>
         </nav>
     </div>
     <h3>Работники: </h3>

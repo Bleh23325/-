@@ -1,33 +1,121 @@
 <?php
-
 require_once './db/connect.php';
 
-// Получение списка отделов
-$departmentResults = mysqli_query($conn, "SELECT id_departament, department FROM department");
-$departments = mysqli_fetch_all($departmentResults, MYSQLI_ASSOC);
+function getDepartments($conn) {
+    return $conn->query("SELECT id_departament, department FROM department")->fetch_all(MYSQLI_ASSOC);
+}
 
-// Получение списка должностей
-$jobTitleResults = mysqli_query($conn, "SELECT id_jt, Job_title FROM Job_title");
-$jobTitles = mysqli_fetch_all($jobTitleResults, MYSQLI_ASSOC);
+function getJobTitles($conn) {
+    return $conn->query("SELECT id_jt, Job_title FROM Job_title")->fetch_all(MYSQLI_ASSOC);
+}
 
-// Получение списка статусов увольнения
-$dismissedResults = mysqli_query($conn, "SELECT id_dis, dismissed FROM Dismissed");
-$Dismissed = mysqli_fetch_all($dismissedResults, MYSQLI_ASSOC);
+// Получение списка статусов
+$statusResults = mysqli_query($conn, "SELECT id_dis, dismissed FROM Dismissed");
+$statuses = mysqli_fetch_all($statusResults, MYSQLI_ASSOC);
 
-// Основной запрос на выборку данных
-$query = "SELECT w.*, a.*, iw.*, dw.*, d.department, jt.Job_title, dis.dismissed, ta.fst_date, ta.last_date, ta.statys
-    FROM Worker w
-    JOIN address a ON w.id_w = a.Worker
-    JOIN data_worker dw ON w.id_w = dw.Worker
-    JOIN department d ON w.department = d.id_departament
-    JOIN info_worker iw ON w.id_w = iw.Worker
-    JOIN Job_title jt ON w.jod_title = jt.id_jt
-    LEFT JOIN time_of_absence ta ON w.id_w = ta.worker
-    LEFT JOIN Dismissed dis ON ta.statys = dis.id_dis";
+$departments = getDepartments($conn);
+$jobTitles = getJobTitles($conn);
+$workers = [];
 
-$results = mysqli_query($conn, $query);
-$workers = mysqli_fetch_all($results, MYSQLI_ASSOC);
+// Обновление данных сотрудника
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update'])) {
+    $id = $_POST['id'];
+    $familia = $_POST['familia'];
+    $ima = $_POST['ima'];
+    $otchestvo = $_POST['otchestvo'];
+    $phone = $_POST['phone'];
+    $data_zachislenia = $_POST['data_zachislenia'];
+    $passport_series = $_POST['passport_series'];
+    $passport_number = $_POST['passport_number'];
+    $passport_issued_by = $_POST['passport_issued_by'];
+    $passport_issue_date = $_POST['passport_issue_date'];
+    $street = $_POST['street'];
+    $house = $_POST['house'];
+    $apartment = $_POST['apartment'];
+    $city = $_POST['city'];
+    $department = $_POST['department'];
+    $job_title = $_POST['job_title'];
+    $status = $_POST['status'];
 
+    // Обновление основной таблицы Worker
+    $sql_worker = "UPDATE Worker 
+                   SET Familia = ?, Ima = ?, Otchestvo = ?, data_zachislenia = ?, department = ?, jod_title = ? 
+                   WHERE id_w = ?";
+    $stmt = $conn->prepare($sql_worker);
+    $stmt->bind_param("ssssiii", $familia, $ima, $otchestvo, $data_zachislenia, $department, $job_title, $id);
+    $stmt->execute();
+    $stmt->close();
+
+    // Обновление контактных данных
+    $sql_info = "UPDATE info_worker SET phone = ? WHERE Worker = ?";
+    $stmt = $conn->prepare($sql_info);
+    $stmt->bind_param("si", $phone, $id);
+    $stmt->execute();
+    $stmt->close();
+
+    // Обновление паспортных данных
+    $sql_passport = "UPDATE data_worker 
+                     SET seria_pasporta = ?, nomer_pasporta = ?, who_issue = ?, when_issue = ? 
+                     WHERE Worker = ?";
+    $stmt = $conn->prepare($sql_passport);
+    $stmt->bind_param("ssssi", $passport_series, $passport_number, $passport_issued_by, $passport_issue_date, $id);
+    $stmt->execute();
+    $stmt->close();
+
+    // Обновление адреса
+    $sql_address = "UPDATE address 
+                    SET street = ?, house = ?, apartment = ?, city = ? 
+                    WHERE Worker = ?";
+    $stmt = $conn->prepare($sql_address);
+    $stmt->bind_param("ssssi", $street, $house, $apartment, $city, $id);
+    $stmt->execute();
+    $stmt->close();
+
+    // Обновление статуса
+    $sql_status = "UPDATE time_of_absence SET statys = ? WHERE worker = ?";
+    $stmt = $conn->prepare($sql_status);
+    $stmt->bind_param("si", $status, $id);
+    $stmt->execute();
+    $stmt->close();
+
+    echo "<script>alert('Данные успешно обновлены!'); window.location.href='edit_worker.php';</script>";
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['search'])) {
+    $familia = trim($_POST['familia'] ?? '');
+    $ima = trim($_POST['ima'] ?? '');
+    $otchestvo = trim($_POST['otchestvo'] ?? '');
+    $department = $_POST['department'] ?? '';
+    $job_title = $_POST['job_title'] ?? '';
+
+    // Проверка на заполненность ФИО
+    if (empty($familia) || empty($ima) || empty($otchestvo)) {
+        echo "<script>alert('Введите Фамилию, Имя и Отчество полностью!');</script>";
+    } else {
+        $sql = "SELECT w.id_w, w.Familia, w.Ima, w.Otchestvo, d.id_departament, d.department, 
+                       j.id_jt, j.Job_title, w.zarplata, w.data_zachislenia, 
+                       i.phone, dw.seria_pasporta, dw.nomer_pasporta, dw.who_issue, dw.when_issue, 
+                       a.street, a.house, a.apartment, a.city, t.statys
+                FROM Worker w
+                LEFT JOIN department d ON w.department = d.id_departament
+                LEFT JOIN Job_title j ON w.jod_title = j.id_jt
+                LEFT JOIN info_worker i ON w.id_w = i.Worker
+                LEFT JOIN data_worker dw ON w.id_w = dw.Worker
+                LEFT JOIN address a ON w.id_w = a.Worker
+                LEFT JOIN time_of_absence t ON w.id_w = t.worker
+                WHERE w.Familia LIKE ? AND w.Ima LIKE ? AND w.Otchestvo LIKE ?";
+
+        $familia = "%$familia%";
+        $ima = "%$ima%";
+        $otchestvo = "%$otchestvo%";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("sss", $familia, $ima, $otchestvo);
+        $stmt->execute();
+        $workers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -35,101 +123,101 @@ $workers = mysqli_fetch_all($results, MYSQLI_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Редактирование работников</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <title>Редактирование сотрудников</title>
+    <link rel="stylesheet" href="./css/styleInsert.css">
 </head>
 <body>
-    <h3>Список работников</h3>
-    <table>
-        <tr>
-            <th>ФИО</th>
-            <th>Отдел</th>
-            <th>Должность</th>
-            <th>Зарплата</th>
-            <th>Дата зачисления</th>
-            <th>Дата отсутствия (начало - конец)</th>
-            <th>Статус увольнения</th>
-            <th>Действия</th>
-        </tr>
-        <?php foreach ($workers as $worker): ?>
-        <tr>
-            <td><?= $worker['Familia'] . " " . $worker['Ima'] . " " . $worker['Otchestvo'] ?></td>
-            <td><?= $worker['department'] ?></td>
-            <td><?= $worker['Job_title'] ?></td>
-            <td><?= $worker['zarplata'] ?> ₽</td>
-            <td><?= $worker['data_zachislenia'] ?></td>
-            <td><?= $worker['fst_date'] && $worker['last_date'] ? $worker['fst_date'] . " - " . $worker['last_date'] : "Нет данных" ?></td>
-            <td><?= $worker['dismissed'] ?: "Не уволен" ?></td>
-            <td><button onclick="editWorker(<?= htmlspecialchars(json_encode($worker), ENT_QUOTES, 'UTF-8') ?>)">Изменить</button></td>
-        </tr>
-        <?php endforeach; ?>
-    </table>
+<div class="header">
+        <div class="logo">Учёт работников</div>
+        <nav>
+            <a href="/meneger.php">Главная</a>
+            <a href="/insert.php">Добавить работника</a>
+            <a href="/search_by_date.php">Умный поиск</a>
+            <a href="/edit_worker.php">Изменить работника</a>
+        </nav>
+    </div>
+    <h2>Поиск сотрудников</h2>
+        <form method="POST">
+            <label>Фамилия: <input type="text" name="familia"></label>
+            <label>Имя: <input type="text" name="ima"></label>
+            <label>Отчество: <input type="text" name="otchestvo"></label>
 
-    <!-- Модальное окно для редактирования -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeEditModal()">&times;</span>
-            <h3>Редактирование данных</h3>
-            <form id="editForm" method="POST" action="edit_worker.php">
-                <input type="hidden" name="id_w" id="editWorkerId">
-                <label>Фамилия:</label>
-                <input type="text" name="Familia" id="editFamilia">
-                <label>Имя:</label>
-                <input type="text" name="Ima" id="editIma">
-                <label>Отчество:</label>
-                <input type="text" name="Otchestvo" id="editOtchestvo">
-                <label>Зарплата:</label>
-                <input type="number" name="zarplata" id="editSalary">
-                <label>Дата зачисления:</label>
-                <input type="date" name="data_zachislenia" id="editHireDate">
-                <label>Дата отсутствия (начало - конец):</label>
-                <input type="date" name="fst_date" id="editAbsenceStart">
-                <input type="date" name="last_date" id="editAbsenceEnd">
-                <label>Статус увольнения:</label>
-                <select name="dismissed" id="editDismissed">
-                    <?php foreach ($Dismissed as $item): ?>
-                        <option value="<?= $item['id_dis'] ?>"><?= htmlspecialchars($item['dismissed']) ?></option>
+            <label>Отдел:
+                <select name="department">
+                    <option value="">Выберите отдел</option>
+                    <?php foreach ($departments as $dept): ?>
+                        <option value="<?= $dept['id_departament'] ?>"><?= $dept['department'] ?></option>
                     <?php endforeach; ?>
                 </select>
-                <button type="submit">Сохранить</button>
+            </label>
+            <label>Должность:
+                <select name="job_title">
+                    <option value="">Выберите должность</option>
+                    <?php foreach ($jobTitles as $job): ?>
+                        <option value="<?= $job['id_jt'] ?>"><?= $job['Job_title'] ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <button type="submit" name="search">Найти</button>
+        </form>
+
+    <?php if (!empty($workers)): ?>
+        <h2>Редактирование сотрудников</h2>
+        <?php foreach ($workers as $worker): ?>
+            <form method="POST">
+                <input type="hidden" name="id" value="<?= $worker['id_w'] ?>">
+                <label>Фамилия: <input type="text" name="familia" value="<?= $worker['Familia'] ?>"></label>
+                <label>Имя: <input type="text" name="ima" value="<?= $worker['Ima'] ?>"></label>
+                <label>Отчество: <input type="text" name="otchestvo" value="<?= $worker['Otchestvo'] ?>"></label>
+                <label>Телефон: <input type="text" name="phone" value="<?= $worker['phone'] ?>"></label>
+
+                <label>Дата зачисления: 
+                    <input type="date" name="data_zachislenia" value="<?= isset($worker['data_zachislenia']) ? date('Y-m-d', strtotime($worker['data_zachislenia'])) : '' ?>">
+                </label>
+
+                <label>Паспорт: 
+                    <input type="text" name="passport_series" value="<?= $worker['seria_pasporta'] ?>"> 
+                    <input type="text" name="passport_number" value="<?= $worker['nomer_pasporta'] ?>">
+                </label>
+                <label>Кем выдан: <input type="text" name="passport_issued_by" value="<?= $worker['who_issue'] ?>"></label>
+                <label>Дата выдачи паспорта: 
+                    <input type="date" name="passport_issue_date" value="<?= isset($worker['when_issue']) ? date('Y-m-d', strtotime($worker['when_issue'])) : '' ?>">
+                </label>
+
+                <label>Адрес: 
+                    <input type="text" name="street" value="<?= $worker['street'] ?>" placeholder="Улица"> 
+                    <input type="text" name="house" value="<?= $worker['house'] ?>" placeholder="Дом"> 
+                    <input type="text" name="apartment" value="<?= $worker['apartment'] ?>" placeholder="Квартира"> 
+                    <input type="text" name="city" value="<?= $worker['city'] ?>" placeholder="Город">
+                </label>
+
+                <label>Отдел:
+                    <select name="department">
+                        <?php foreach ($departments as $dept): ?>
+                            <option value="<?= $dept['id_departament'] ?>" <?= $worker['id_departament'] == $dept['id_departament'] ? 'selected' : '' ?>><?= $dept['department'] ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+
+                <label>Должность:
+                    <select name="job_title">
+                        <?php foreach ($jobTitles as $job): ?>
+                            <option value="<?= $job['id_jt'] ?>" <?= $worker['id_jt'] == $job['id_jt'] ? 'selected' : '' ?>><?= $job['Job_title'] ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+
+                <label>Статус: 
+                <select id="statusSelect" name="status">
+            <?php foreach ($statuses as $status): ?>
+                <option value="<?= $status['id_dis'] ?>"><?= htmlspecialchars($status['dismissed']) ?></option>
+            <?php endforeach; ?>
+        </select>
+                </label>
+
+                <button type="submit" name="update">Сохранить</button>
             </form>
-        </div>
-    </div>
-
-    <script>
-        function editWorker(worker) {
-            document.getElementById('editWorkerId').value = worker.id_w;
-            document.getElementById('editFamilia').value = worker.Familia;
-            document.getElementById('editIma').value = worker.Ima;
-            document.getElementById('editOtchestvo').value = worker.Otchestvo;
-            document.getElementById('editSalary').value = worker.zarplata;
-            document.getElementById('editHireDate').value = worker.data_zachislenia;
-            document.getElementById('editAbsenceStart').value = worker.fst_date || '';
-            document.getElementById('editAbsenceEnd').value = worker.last_date || '';
-            document.getElementById('editDismissed').value = worker.statys || '';
-            document.getElementById('editModal').style.display = 'flex';
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-
-        document.getElementById('editForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const formData = new FormData(this);
-            fetch('edit_worker.php', { method: 'POST', body: formData })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Данные обновлены!');
-                        location.reload();
-                    } else {
-                        alert('Ошибка: ' + data.error);
-                    }
-                })
-                .catch(error => alert('Ошибка запроса: ' + error));
-            closeEditModal();
-        });
-    </script>
+        <?php endforeach; ?>
+    <?php endif; ?>
 </body>
 </html>
