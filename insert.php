@@ -1,0 +1,137 @@
+<?php
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "tz3";
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+if ($conn->connect_error) {
+    die("Ошибка подключения: " . $conn->connect_error);
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $surname = $_POST['surname'];
+    $name = $_POST['name'];
+    $patronymic = $_POST['patronymic'];
+    $department = $_POST['department'];
+    $job_title = $_POST['job_title'];
+    $salary = $_POST['salary'];
+    $street = $_POST['street'];
+    $house = $_POST['house'];
+    $passport_series = $_POST['passport_series'];
+    $passport_number = $_POST['passport_number'];
+    $phone = $_POST['phone'];
+    $birth_date = $_POST['birth_date'];
+    $hire_date = $_POST['hire_date'];
+
+    $sql = "INSERT INTO Worker (Familia, Ima, Otchestvo, department, jod_title, data_rojdenia, zarplata, data_zachislenia) 
+            VALUES ('$surname', '$name', '$patronymic', '$department', '$job_title', '$birth_date', '$salary', '$hire_date')";
+    
+    if ($conn->query($sql) === TRUE) {
+        $worker_id = $conn->insert_id;
+        $conn->query("INSERT INTO address (street, house, Worker) VALUES ('$street', '$house', '$worker_id')");
+        $conn->query("INSERT INTO data_worker (seria_pasporta, nomer_pasporta, Worker) VALUES ('$passport_series', '$passport_number', '$worker_id')");
+        $conn->query("INSERT INTO info_worker (phone, Worker) VALUES ('$phone', '$worker_id')");
+        echo "<p class='success-message'>Сотрудник добавлен успешно!</p>";
+    } else {
+        echo "<p class='error-message'>Ошибка: " . $conn->error . "</p>";
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавление сотрудника</title>
+    <link rel="stylesheet" href="./css/styleInsert.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">Учёт работников</div>
+        <nav>
+            <a href="/meneger.php">Главная</a>
+            <a href="/insert.php">Добавить работника</a>
+            <a href="/search_by_date.php">Умный поиск</a>
+        </nav>
+    </div>
+
+    <div class="form-container">
+        <h2>Добавление нового сотрудника</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label>Фамилия:</label>
+                <input type="text" name="surname" placeholder="Введите фамилию" required autocomplete="family-name">
+            </div>
+            <div class="form-group">
+                <label>Имя:</label>
+                <input type="text" name="name" placeholder="Введите имя" required autocomplete="given-name">
+            </div>
+            <div class="form-group">
+                <label>Отчество:</label>
+                <input type="text" name="patronymic" placeholder="Введите отчество" required>
+            </div>
+            <div class="form-group">
+                <label>Дата рождения:</label>
+                <input type="date" name="birth_date" required>
+            </div>
+            <div class="form-group">
+                <label>Дата зачисления:</label>
+                <input type="date" name="hire_date" required>
+            </div>
+            <div class="form-group">
+                <label>Зарплата (₽):</label>
+                <input type="number" name="salary" placeholder="Введите сумму" required min="10000">
+            </div>
+            <div class="form-group">
+                <label>Адрес:</label>
+                <input type="text" name="street" placeholder="Улица" required>
+                <input type="number" name="house" placeholder="Дом" required>
+            </div>
+            <div class="form-group">
+                <label>Паспорт:</label>
+                <input type="text" name="passport_series" id="passport_series" placeholder="Серия (4 цифры)" required>
+                <input type="text" name="passport_number" id="passport_number" placeholder="Номер (6 цифр)" required>
+            </div>
+            <div class="form-group">
+                <label>Телефон:</label>
+                <input type="tel" name="phone" id="phone" placeholder="+7 (___) ___-__-__" required>
+            </div>
+            <div class="form-group">
+                <label>Департамент:</label>
+                <select name="department" required>
+                    <?php
+                    $result = $conn->query("SELECT id_departament, department FROM department");
+                    while ($row = $result->fetch_assoc()) {
+                        echo "<option value='" . $row['id_departament'] . "'>" . $row['department'] . "</option>";
+                    }
+                    ?>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Должность:</label>
+                <select name="job_title" required>
+                    <?php
+                    $result = $conn->query("SELECT id_jt, Job_title FROM Job_title");
+                    while ($row = $result->fetch_assoc()) {
+                        echo "<option value='" . $row['id_jt'] . "'>" . $row['Job_title'] . "</option>";
+                    }
+                    ?>
+                </select>
+            </div>
+            <button type="submit">Добавить</button>
+        </form>
+    </div>
+
+    <script>
+        $(document).ready(function(){
+            $('#passport_series').mask('0000');
+            $('#passport_number').mask('000000');
+            $('#phone').mask('+7 (000) 000-00-00');
+        });
+    </script>
+</body>
+</html>

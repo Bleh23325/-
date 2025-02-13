@@ -3,7 +3,7 @@ session_start();
 
 // Подключение к базе данных
 $host = 'localhost';
-$dbname = 'tz2';
+$dbname = 'tz3';
 $dbuser = 'root';
 $dbpass = '';
 
