@@ -1,5 +1,5 @@
 <?php
-require_once './db/connect.php';
+require_once '../../db/connect.php';
 
 function getDepartments($conn) {
     return $conn->query("SELECT id_departament, department FROM department")->fetch_all(MYSQLI_ASSOC);
@@ -36,6 +36,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update'])) {
     $department = $_POST['department'];
     $job_title = $_POST['job_title'];
     $status = $_POST['status'];
+    $fst_date = $_POST['fst_date'];
+    $last_date = $_POST['last_date'];
 
     // Обновление основной таблицы Worker
     $sql_worker = "UPDATE Worker 
@@ -71,10 +73,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update'])) {
     $stmt->execute();
     $stmt->close();
 
-    // Обновление статуса
-    $sql_status = "UPDATE time_of_absence SET statys = ? WHERE worker = ?";
+    // Обновление статуса и дат отсутствия
+    $sql_status = "UPDATE time_of_absence SET statys = ?, fst_date = ?, last_date = ? WHERE worker = ?";
     $stmt = $conn->prepare($sql_status);
-    $stmt->bind_param("si", $status, $id);
+    $stmt->bind_param("sssi", $status, $fst_date, $last_date, $id);
     $stmt->execute();
     $stmt->close();
 
@@ -85,25 +87,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['search'])) {
     $familia = trim($_POST['familia'] ?? '');
     $ima = trim($_POST['ima'] ?? '');
     $otchestvo = trim($_POST['otchestvo'] ?? '');
-    $department = $_POST['department'] ?? '';
-    $job_title = $_POST['job_title'] ?? '';
 
-    // Проверка на заполненность ФИО
     if (empty($familia) || empty($ima) || empty($otchestvo)) {
         echo "<script>alert('Введите Фамилию, Имя и Отчество полностью!');</script>";
     } else {
         $sql = "SELECT w.id_w, w.Familia, w.Ima, w.Otchestvo, d.id_departament, d.department, 
-                       j.id_jt, j.Job_title, w.zarplata, w.data_zachislenia, 
-                       i.phone, dw.seria_pasporta, dw.nomer_pasporta, dw.who_issue, dw.when_issue, 
-                       a.street, a.house, a.apartment, a.city, t.statys
-                FROM Worker w
-                LEFT JOIN department d ON w.department = d.id_departament
-                LEFT JOIN Job_title j ON w.jod_title = j.id_jt
-                LEFT JOIN info_worker i ON w.id_w = i.Worker
-                LEFT JOIN data_worker dw ON w.id_w = dw.Worker
-                LEFT JOIN address a ON w.id_w = a.Worker
-                LEFT JOIN time_of_absence t ON w.id_w = t.worker
-                WHERE w.Familia LIKE ? AND w.Ima LIKE ? AND w.Otchestvo LIKE ?";
+               j.id_jt, j.Job_title, w.data_zachislenia, 
+               i.phone, dw.seria_pasporta, dw.nomer_pasporta, dw.who_issue, dw.when_issue, 
+               a.street, a.house, a.apartment, a.city, 
+               t.statys, t.fst_date, t.last_date
+        FROM Worker w
+        LEFT JOIN department d ON w.department = d.id_departament
+        LEFT JOIN Job_title j ON w.jod_title = j.id_jt
+        LEFT JOIN info_worker i ON w.id_w = i.Worker
+        LEFT JOIN data_worker dw ON w.id_w = dw.Worker
+        LEFT JOIN address a ON w.id_w = a.Worker
+        LEFT JOIN time_of_absence t ON w.id_w = t.worker
+        WHERE w.Familia LIKE ? AND w.Ima LIKE ? AND w.Otchestvo LIKE ?
+        ORDER BY w.data_zachislenia DESC
+        LIMIT 1";
 
         $familia = "%$familia%";
         $ima = "%$ima%";
@@ -124,16 +126,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['search'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Редактирование сотрудников</title>
-    <link rel="stylesheet" href="./css/styleInsert.css">
+    <link rel="stylesheet" href="/css/styleEdit.css">
 </head>
 <body>
 <div class="header">
         <div class="logo">Учёт работников</div>
         <nav>
             <a href="/meneger.php">Главная</a>
-            <a href="/insert.php">Добавить работника</a>
-            <a href="/search_by_date.php">Умный поиск</a>
-            <a href="/edit_worker.php">Изменить работника</a>
+            <a href="/modules/meneger/insert.php">Добавить работника</a>
+            <a href="/modules/meneger/search_by_date.php">Умный поиск</a>
+            <a href="/modules/meneger/edit_worker.php">Изменить работника</a>
         </nav>
     </div>
     <h2>Поиск сотрудников</h2>
@@ -141,23 +143,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['search'])) {
             <label>Фамилия: <input type="text" name="familia"></label>
             <label>Имя: <input type="text" name="ima"></label>
             <label>Отчество: <input type="text" name="otchestvo"></label>
-
-            <label>Отдел:
-                <select name="department">
-                    <option value="">Выберите отдел</option>
-                    <?php foreach ($departments as $dept): ?>
-                        <option value="<?= $dept['id_departament'] ?>"><?= $dept['department'] ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </label>
-            <label>Должность:
-                <select name="job_title">
-                    <option value="">Выберите должность</option>
-                    <?php foreach ($jobTitles as $job): ?>
-                        <option value="<?= $job['id_jt'] ?>"><?= $job['Job_title'] ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </label>
             <button type="submit" name="search">Найти</button>
         </form>
 
@@ -208,13 +193,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['search'])) {
                 </label>
 
                 <label>Статус: 
-                <select id="statusSelect" name="status">
-            <?php foreach ($statuses as $status): ?>
-                <option value="<?= $status['id_dis'] ?>"><?= htmlspecialchars($status['dismissed']) ?></option>
-            <?php endforeach; ?>
-        </select>
+                    <select id="statusSelect" name="status">
+                        <?php foreach ($statuses as $status): ?>
+                            <option value="<?= $status['id_dis'] ?>" <?= ($worker['statys'] == $status['id_dis']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($status['dismissed']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+                <label>Дата начала отсутствия:
+                    <input type="date" name="fst_date" value="<?= isset($worker['fst_date']) ? date('Y-m-d', strtotime($worker['fst_date'])) : '' ?>">
                 </label>
 
+                <label>Дата окончания отсутствия:
+                    <input type="date" name="last_date" value="<?= isset($worker['last_date']) ? date('Y-m-d', strtotime($worker['last_date'])) : '' ?>">
+                </label>
                 <button type="submit" name="update">Сохранить</button>
             </form>
         <?php endforeach; ?>

@@ -59,17 +59,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Добавление сотрудника</title>
-    <link rel="stylesheet" href="./css/styleInsert.css">
+    <link rel="stylesheet" href="../../css/styleInsert.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 </head>
 <body>
-    <div class="header">
+<div class="header">
         <div class="logo">Учёт работников</div>
         <nav>
             <a href="/meneger.php">Главная</a>
-            <a href="/insert.php">Добавить работника</a>
-            <a href="/search_by_date.php">Умный поиск</a>
+            <a href="/modules/meneger/insert.php">Добавить работника</a>
+            <a href="/modules/meneger/search_by_date.php">Умный поиск</a>
+            <a href="/modules/meneger/edit_worker.php">Изменить работника</a>
         </nav>
     </div>
 

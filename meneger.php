@@ -100,9 +100,9 @@ while ($row = mysqli_fetch_assoc($results)) {
         <div class="logo">Учёт работников</div>
         <nav>
             <a href="/meneger.php">Главная</a>
-            <a href="/insert.php">Добавить работника</a>
-            <a href="/search_by_date.php">Умный поиск</a>
-            <a href="/edit_worker.php">Изменить работника</a>
+            <a href="./modules/meneger/insert.php">Добавить работника</a>
+            <a href="./modules/meneger//search_by_date.php">Умный поиск</a>
+            <a href="./modules/meneger//edit_worker.php">Изменить работника</a>
         </nav>
     </div>
     <h3>Работники: </h3>
@@ -221,13 +221,16 @@ while ($row = mysqli_fetch_assoc($results)) {
             absenceInfoDiv.innerHTML = "";
 
             if (absences.length > 0) {
-                // Сортировка по дате окончания отсутствия (по убыванию)
-                absences.sort((a, b) => new Date(b.end) - new Date(a.end));
-                
-                // Отображаем только последнюю дату отсутствия
+                absences.sort((a, b) => new Date(b.end || b.start) - new Date(a.end || a.start));
+
                 const lastAbsence = absences[0];
+
                 const p = document.createElement('p');
-                p.textContent = `С ${lastAbsence.start} по ${lastAbsence.end}`;
+                if (lastAbsence.end === null || lastAbsence.end === "" || typeof lastAbsence.end === "undefined") {
+                    p.textContent = `С ${lastAbsence.start}`;
+                } else {
+                    p.textContent = `С ${lastAbsence.start} по ${lastAbsence.end}`;
+                }
                 absenceInfoDiv.appendChild(p);
             } else {
                 absenceInfoDiv.textContent = "Нет данных об отсутствии.";

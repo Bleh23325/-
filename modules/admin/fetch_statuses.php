@@ -1,5 +1,5 @@
 <?php
-require_once './db/connect.php';
+require_once '/db/connect.php';
 
 $query = "SELECT id_dis, dismissed FROM Dismissed";
 $result = mysqli_query($conn, $query);

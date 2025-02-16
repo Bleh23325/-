@@ -1,5 +1,5 @@
 <?php
-require_once './db/connect.php';
+require_once '../../db/connect.php';
 
 // Получение списка отделов
 $departmentResults = mysqli_query($conn, "SELECT id_departament, department FROM department");
@@ -65,13 +65,14 @@ if ($searchTerm) {
 <body>
 
 <div class="header">
-    <div class="logo">Учёт работников</div>
-    <nav>
-        <a href="/meneger.php">Главная</a>
-        <a href="/insert.php">Добавить работника</a>
-        <a href="/search_by_date.php">Умный поиск</a>
-    </nav>
-</div>
+        <div class="logo">Учёт работников</div>
+        <nav>
+            <a href="/meneger.php">Главная</a>
+            <a href="/modules/meneger/insert.php">Добавить работника</a>
+            <a href="/modules/meneger/search_by_date.php">Умный поиск</a>
+            <a href="/modules/meneger/edit_worker.php">Изменить работника</a>
+        </nav>
+    </div>>
 
 <h3>Фильтр сотрудников</h3>
 <div class="filter-form">
