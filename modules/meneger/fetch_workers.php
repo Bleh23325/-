@@ -1,5 +1,5 @@
 <?php
-require_once '/db/connect.php';
+require_once '../../db/connect.php';
 
 // Получение списка отделов
 $departmentResults = mysqli_query($conn, "SELECT id_departament, department FROM department");

@@ -72,7 +72,7 @@ if ($searchTerm) {
             <a href="/modules/meneger/search_by_date.php">Умный поиск</a>
             <a href="/modules/meneger/edit_worker.php">Изменить работника</a>
         </nav>
-    </div>>
+    </div>
 
 <h3>Фильтр сотрудников</h3>
 <div class="filter-form">

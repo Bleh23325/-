@@ -74,7 +74,7 @@ if ($searchTerm) {
             <a href="/modules/admin/job_title.php">Должности</a>
             <a href="/modules/admin/department.php">Отделы</a>
         </nav>
-    </div>>
+    </div>
 
 <h3>Фильтр сотрудников</h3>
 <div class="filter-form">

@@ -81,7 +81,7 @@ while ($row = mysqli_fetch_assoc($results)) {
         $tabl[$workerId] = $row;
         $tabl[$workerId]['absences'] = [];
     }
-    if ($row['fst_date'] && $row['last_date']) {
+    if ($row['fst_date'] || $row['last_date']) {
         $tabl[$workerId]['absences'][] = ['start' => $row['fst_date'], 'end' => $row['last_date']];
     }
 }

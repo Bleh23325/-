@@ -81,7 +81,7 @@ while ($row = mysqli_fetch_assoc($results)) {
         $tabl[$workerId] = $row;
         $tabl[$workerId]['absences'] = [];
     }
-    if ($row['fst_date'] && $row['last_date']) {
+    if ($row['fst_date'] || $row['last_date']) {
         $tabl[$workerId]['absences'][] = ['start' => $row['fst_date'], 'end' => $row['last_date']];
     }
 }
@@ -106,7 +106,9 @@ while ($row = mysqli_fetch_assoc($results)) {
             <a href="./modules/admin/job_title.php">Должности</a>
             <a href="./modules/admin/department.php">Отделы</a>
         </nav>
+        <button id="backupBtn">📁 Архивировать БД</button>
     </div>
+
     <h3>Работники: </h3>
     <div class="tabel">
         <div class="title">
@@ -279,30 +281,23 @@ while ($row = mysqli_fetch_assoc($results)) {
     function closeEditModal() {
         document.getElementById('editModal').style.display = 'none';
     }
-    document.getElementById('editForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        
-        const formData = new FormData(this); 
 
-        fetch('edit_worker.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json()) 
-        .then(data => {
-            if (data.success) {
-                alert('Данные успешно сохранены!');
-                location.reload(); 
-            } else {
-                alert('Ошибка сохранения данных: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Ошибка:', error);
-            alert('Произошла ошибка при сохранении данных.');
-        });
-
-        closeEditModal(); 
+    document.getElementById('backupBtn').addEventListener('click', function() {
+        if (confirm("Вы уверены, что хотите создать резервную копию базы данных?")) {
+            fetch('/modules/admin/backup.php', { method: 'GET' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Бэкап успешно создан! Файл: " + data.file);
+                } else {
+                    alert("Ошибка: " + data.error);
+                }
+            })
+            .catch(error => {
+                alert("Ошибка выполнения запроса.");
+                console.error(error);
+            });
+        }
     });
     </script>
 </body>

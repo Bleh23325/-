@@ -7,7 +7,43 @@ body {
     color: #333;
 }
 
-/* Шапка */
+.hidden-data-container {
+    position: relative;
+    display: inline-block;
+    width: 100px; 
+    height: 20px;
+    text-align: center;
+    background-color: #f8f9fa; 
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.hidden-data {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    font-weight: bold;
+    color: #333;
+}
+
+.hidden-data-container:hover .hidden-data {
+    visibility: visible;
+    opacity: 1;
+}
+
+.hidden-icon {
+    font-size: 16px;
+    color: #757575;
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.hidden-data-container:hover .hidden-icon {
+    visibility: hidden;
+    opacity: 0;
+}
 .header {
     background: linear-gradient(90deg, #6a11cb, #2575fc);
     padding: 20px 30px;
@@ -50,22 +86,6 @@ body {
 .header a:hover {
     background: rgba(255, 255, 255, 0.2);
     transform: scale(1.05);
-}
-
-.logo {
-    font-size: 20px;
-    font-weight: bold;
-}
-
-nav a {
-    color: white;
-    text-decoration: none;
-    margin-left: 15px;
-    font-weight: bold;
-}
-
-nav a:hover {
-    text-decoration: underline;
 }
 
 /* Фильтр */

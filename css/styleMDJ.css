@@ -14,38 +14,85 @@ h2 {
 }
 
 /* Шапка с градиентом */
+.hidden-data-container {
+    position: relative;
+    display: inline-block;
+    width: 100px; 
+    height: 20px;
+    text-align: center;
+    background-color: #f8f9fa; 
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.hidden-data {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    font-weight: bold;
+    color: #333;
+}
+
+.hidden-data-container:hover .hidden-data {
+    visibility: visible;
+    opacity: 1;
+}
+
+.hidden-icon {
+    font-size: 16px;
+    color: #757575;
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.hidden-data-container:hover .hidden-icon {
+    visibility: hidden;
+    opacity: 0;
+}
 .header {
     background: linear-gradient(90deg, #6a11cb, #2575fc);
-    padding: 15px 30px;
+    padding: 20px 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     color: #fff;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    top: 0;
+    left: 0;
+    transition: all 0.3s ease-in-out;
 }
 
 .header .logo {
     font-size: 24px;
     font-weight: bold;
+    letter-spacing: 1px;
     text-transform: uppercase;
+    transition: transform 0.3s ease;
+}
+
+.header .logo:hover {
+    transform: scale(1.1);
 }
 
 .header nav {
     display: flex;
-    gap: 15px;
+    gap: 20px;
 }
 
 .header a {
     color: #fff;
     text-decoration: none;
-    font-size: 16px;
-    padding: 8px 12px;
-    border-radius: 5px;
-    transition: background 0.3s ease-in-out;
+    font-size: 18px;
+    padding: 10px 15px;
+    border-radius: 6px;
+    transition: background 0.3s, transform 0.2s;
 }
 
 .header a:hover {
     background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
 }
 
 /* Строка поиска */
