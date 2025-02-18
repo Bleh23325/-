@@ -105,8 +105,8 @@ while ($row = mysqli_fetch_assoc($results)) {
             <a href="./modules/admin//edit_worker.php">Изменить работника</a>
             <a href="./modules/admin/job_title.php">Должности</a>
             <a href="./modules/admin/department.php">Отделы</a>
+            <button id="backupBtn">📁 Архивировать БД</button>
         </nav>
-        <button id="backupBtn">📁 Архивировать БД</button>
     </div>
 
     <h3>Работники: </h3>

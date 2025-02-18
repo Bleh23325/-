@@ -127,6 +127,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['search'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Редактирование сотрудников</title>
     <link rel="stylesheet" href="/css/styleEdit.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 </head>
 <body>
 <div class="header">
@@ -156,15 +158,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['search'])) {
                 <label>Фамилия: <input type="text" name="familia" value="<?= $worker['Familia'] ?>"></label>
                 <label>Имя: <input type="text" name="ima" value="<?= $worker['Ima'] ?>"></label>
                 <label>Отчество: <input type="text" name="otchestvo" value="<?= $worker['Otchestvo'] ?>"></label>
-                <label>Телефон: <input type="text" name="phone" value="<?= $worker['phone'] ?>"></label>
+                <label>Телефон: <input type="text" name="phone" id="phone" value="<?= $worker['phone'] ?>"></label>
 
                 <label>Дата зачисления: 
                     <input type="date" name="data_zachislenia" value="<?= isset($worker['data_zachislenia']) ? date('Y-m-d', strtotime($worker['data_zachislenia'])) : '' ?>">
                 </label>
 
                 <label>Паспорт: 
-                    <input type="text" name="passport_series" value="<?= $worker['seria_pasporta'] ?>"> 
-                    <input type="text" name="passport_number" value="<?= $worker['nomer_pasporta'] ?>">
+                    <input type="text" name="passport_series" id="passport_series" value="<?= $worker['seria_pasporta'] ?>"> 
+                    <input type="text" name="passport_number" id="passport_number" value="<?= $worker['nomer_pasporta'] ?>">
                 </label>
                 <label>Кем выдан: <input type="text" name="passport_issued_by" value="<?= $worker['who_issue'] ?>"></label>
                 <label>Дата выдачи паспорта: 
@@ -214,5 +216,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['search'])) {
             </form>
         <?php endforeach; ?>
     <?php endif; ?>
+
+    <script>
+        $(document).ready(function(){
+            $('#passport_series').mask('0000');
+            $('#passport_number').mask('000000');
+            $('#phone').mask('+7 (000) 000-00-00');
+        });
+    </script>
 </body>
 </html>
