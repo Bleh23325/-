@@ -102,7 +102,7 @@ while ($row = mysqli_fetch_assoc($results)) {
             <a href="/admin.php">Главная</a>
             <a href="./modules/admin/insert.php">Добавить работника</a>
             <a href="./modules/admin//search_by_date.php">Умный поиск</a>
-            <a href="./modules/admin//edit_worker.php">Изменить работника</a>
+            <a href="./modules/admin//edit_worker.php">Изменить данные работника</a>
             <a href="./modules/admin/job_title.php">Должности</a>
             <a href="./modules/admin/department.php">Отделы</a>
             <button id="backupBtn">📁 Архивировать БД</button>
@@ -123,6 +123,9 @@ while ($row = mysqli_fetch_assoc($results)) {
                 <td>ФИО</td>
                 <td>
                     <form method="GET" action="">
+                        <input type="hidden" name="search" value="<?= htmlspecialchars($searchTerm) ?>">
+                        <input type="hidden" name="job_title" value="<?= htmlspecialchars($selectedJobTitle) ?>">
+                        <input type="hidden" name="dismissed" value="<?= htmlspecialchars($selectedDismissed) ?>">
                         <select name="department" onchange="this.form.submit()">
                             <option value="">Все отделы</option>
                             <?php foreach ($departments as $department): ?>
@@ -135,6 +138,9 @@ while ($row = mysqli_fetch_assoc($results)) {
                 </td>
                 <td>
                     <form method="GET" action="">
+                        <input type="hidden" name="search" value="<?= htmlspecialchars($searchTerm) ?>">
+                        <input type="hidden" name="department" value="<?= htmlspecialchars($selectedDepartment) ?>">
+                        <input type="hidden" name="dismissed" value="<?= htmlspecialchars($selectedDismissed) ?>">
                         <select name="job_title" onchange="this.form.submit()">
                             <option value="">Все должности</option>
                             <?php foreach ($jobTitles as $jobTitle): ?>
@@ -149,6 +155,9 @@ while ($row = mysqli_fetch_assoc($results)) {
                 <td>Дата принятия на работу</td>
                 <td>
                     <form method="GET" action="">
+                        <input type="hidden" name="search" value="<?= htmlspecialchars($searchTerm) ?>">
+                        <input type="hidden" name="department" value="<?= htmlspecialchars($selectedDepartment) ?>">
+                        <input type="hidden" name="job_title" value="<?= htmlspecialchars($selectedJobTitle) ?>">
                         <select name="dismissed" onchange="this.form.submit()">
                             <option value="">Все статусы</option>
                             <?php foreach ($Dismissed as $dismissedItem): ?>
@@ -159,7 +168,6 @@ while ($row = mysqli_fetch_assoc($results)) {
                         </select>
                     </form>
                 </td>
-
                 <td>Персональные данные</td>
             </tr>
                 <?php foreach ($tabl as $data): ?>             

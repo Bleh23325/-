@@ -10,7 +10,6 @@ if ($conn->connect_error) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Получаем данные из формы
     $surname = $_POST['surname'];
     $name = $_POST['name'];
     $patronymic = $_POST['patronymic'];
@@ -29,26 +28,58 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $birth_date = $_POST['birth_date'];
     $hire_date = $_POST['hire_date'];
 
+    // **Проверка возраста**
+    $birthDateObj = new DateTime($birth_date);
+    $currentDate = new DateTime();
+    $age = $currentDate->diff($birthDateObj)->y;
+
+    if ($age < 14 || $age > 70) {
+        die("<script>alert('Ошибка: возраст должен быть от 14 до 70 лет.'); window.location.href='insert.php';</script>");
+    }
+
+    // Проверяем, есть ли уже такой сотрудник
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM Worker WHERE Familia = ? AND Ima = ? AND Otchestvo = ?");
+    $stmt->bind_param("sss", $surname, $name, $patronymic);
+    $stmt->execute();
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
+
+    if ($count > 0) {
+        die("<script>alert('Сотрудник с таким ФИО уже существует.'); window.location.href='insert.php';</script>");
+    }
+
     // Вставляем данные в таблицу Worker
-    $sql = "INSERT INTO Worker (Familia, Ima, Otchestvo, department, jod_title, data_rojdenia, zarplata, data_zachislenia) 
-            VALUES ('$surname', '$name', '$patronymic', '$department', '$job_title', '$birth_date', '$salary', '$hire_date')";
+    $stmt = $conn->prepare("INSERT INTO Worker (Familia, Ima, Otchestvo, department, jod_title, data_rojdenia, zarplata, data_zachislenia) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssssss", $surname, $name, $patronymic, $department, $job_title, $birth_date, $salary, $hire_date);
+    
+    if ($stmt->execute()) {
+        $worker_id = $stmt->insert_id;
+        $stmt->close();
 
-    if ($conn->query($sql) === TRUE) {
-        $worker_id = $conn->insert_id;
-
-        // Вставляем данные в таблицу address (улица, дом, город, квартира)
-        $conn->query("INSERT INTO address (street, house, apartment, city, Worker) VALUES ('$street', '$house', '$apartment', '$city', '$worker_id')");
+        // Вставляем данные в таблицу address
+        $stmt = $conn->prepare("INSERT INTO address (street, house, apartment, city, Worker) VALUES (?, ?, ?, ?, ?)");
+        $stmt->bind_param("sissi", $street, $house, $apartment, $city, $worker_id);
+        $stmt->execute();
+        $stmt->close();
 
         // Вставляем данные в таблицу data_worker (паспорт)
-        $conn->query("INSERT INTO data_worker (seria_pasporta, nomer_pasporta, who_issue, when_issue, Worker) 
-                      VALUES ('$passport_series', '$passport_number', '$passport_issued_by', '$passport_issued_date', '$worker_id')");
+        $stmt = $conn->prepare("INSERT INTO data_worker (seria_pasporta, nomer_pasporta, who_issue, when_issue, Worker) 
+                                VALUES (?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssi", $passport_series, $passport_number, $passport_issued_by, $passport_issued_date, $worker_id);
+        $stmt->execute();
+        $stmt->close();
 
         // Вставляем контактные данные в таблицу info_worker
-        $conn->query("INSERT INTO info_worker (phone, Worker) VALUES ('$phone', '$worker_id')");
+        $stmt = $conn->prepare("INSERT INTO info_worker (phone, Worker) VALUES (?, ?)");
+        $stmt->bind_param("si", $phone, $worker_id);
+        $stmt->execute();
+        $stmt->close();
 
-        echo "<p class='success-message'>Сотрудник добавлен успешно!</p>";
+        echo "<script>alert('Сотрудник добавлен успешно!'); window.location.href='meneger.php';</script>";
     } else {
-        echo "<p class='error-message'>Ошибка: " . $conn->error . "</p>";
+        echo "<script>alert('Ошибка: " . $conn->error . "'); window.location.href='insert.php';</script>";
     }
 }
 ?>
@@ -147,10 +178,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <script>
         $(document).ready(function(){
-            $('#passport_series').mask('0000');
-            $('#passport_number').mask('000000');
-            $('#phone').mask('+7 (000) 000-00-00');
+        $('#passport_series').mask('0000');
+        $('#passport_number').mask('000000');
+        $('#phone').mask('+7 (000) 000-00-00');
+
+        // Проверка возраста в JavaScript
+        $("#workerForm").submit(function(event) {
+            let birthDate = new Date($("#birth_date").val());
+            let today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            let monthDiff = today.getMonth() - birthDate.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            if (age < 14 || age > 70) {
+                alert("Ошибка: возраст должен быть от 14 до 70 лет.");
+                event.preventDefault(); // Отмена отправки формы
+            }
         });
+    });
     </script>
 </body>
 </html>

@@ -29,26 +29,49 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $birth_date = $_POST['birth_date'];
     $hire_date = $_POST['hire_date'];
 
-    // Вставляем данные в таблицу Worker
-    $sql = "INSERT INTO Worker (Familia, Ima, Otchestvo, department, jod_title, data_rojdenia, zarplata, data_zachislenia) 
-            VALUES ('$surname', '$name', '$patronymic', '$department', '$job_title', '$birth_date', '$salary', '$hire_date')";
+    // Проверяем, есть ли уже такой сотрудник в базе (по ФИО)
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM Worker WHERE Familia = ? AND Ima = ? AND Otchestvo = ?");
+    $stmt->bind_param("sss", $surname, $name, $patronymic);
+    $stmt->execute();
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
 
-    if ($conn->query($sql) === TRUE) {
-        $worker_id = $conn->insert_id;
-
-        // Вставляем данные в таблицу address (улица, дом, город, квартира)
-        $conn->query("INSERT INTO address (street, house, apartment, city, Worker) VALUES ('$street', '$house', '$apartment', '$city', '$worker_id')");
-
-        // Вставляем данные в таблицу data_worker (паспорт)
-        $conn->query("INSERT INTO data_worker (seria_pasporta, nomer_pasporta, who_issue, when_issue, Worker) 
-                      VALUES ('$passport_series', '$passport_number', '$passport_issued_by', '$passport_issued_date', '$worker_id')");
-
-        // Вставляем контактные данные в таблицу info_worker
-        $conn->query("INSERT INTO info_worker (phone, Worker) VALUES ('$phone', '$worker_id')");
-
-        echo "<p class='success-message'>Сотрудник добавлен успешно!</p>";
+    if ($count > 0) {
+        echo "Сотрудник с таким ФИО уже существует.";
     } else {
-        echo "<p class='error-message'>Ошибка: " . $conn->error . "</p>";
+        // Вставляем данные в таблицу Worker
+        $stmt = $conn->prepare("INSERT INTO Worker (Familia, Ima, Otchestvo, department, jod_title, data_rojdenia, zarplata, data_zachislenia) 
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssssss", $surname, $name, $patronymic, $department, $job_title, $birth_date, $salary, $hire_date);
+        
+        if ($stmt->execute()) {
+            $worker_id = $stmt->insert_id;
+            $stmt->close();
+
+            // Вставляем данные в таблицу address
+            $stmt = $conn->prepare("INSERT INTO address (street, house, apartment, city, Worker) VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("sissi", $street, $house, $apartment, $city, $worker_id);
+            $stmt->execute();
+            $stmt->close();
+
+            // Вставляем данные в таблицу data_worker (паспорт)
+            $stmt = $conn->prepare("INSERT INTO data_worker (seria_pasporta, nomer_pasporta, who_issue, when_issue, Worker) 
+                                    VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssssi", $passport_series, $passport_number, $passport_issued_by, $passport_issued_date, $worker_id);
+            $stmt->execute();
+            $stmt->close();
+
+            // Вставляем контактные данные в таблицу info_worker
+            $stmt = $conn->prepare("INSERT INTO info_worker (phone, Worker) VALUES (?, ?)");
+            $stmt->bind_param("si", $phone, $worker_id);
+            $stmt->execute();
+            $stmt->close();
+
+            echo "Сотрудник добавлен успешно!";
+        } else {
+            echo "Ошибка: " . $conn->error;
+        }
     }
 }
 ?>
